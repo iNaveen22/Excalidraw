@@ -118,7 +118,7 @@ app.get("/rooms/:roomId/shapes", async (req, res) => {
             orderBy: { createdAt: "asc"}
         });
 
-        res.json({ shapes: shapes.map(s => s.data) });
+        res.json({ shapes: shapes.map((s:any) => s.data) });
     } catch (err) {
         console.error("rooms/roomId/shapes endpoint error",err);
         res.status(500).json({ error: "Internal server error" });
