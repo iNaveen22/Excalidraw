@@ -21,7 +21,6 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
     socketRef.current = ws;
 
     ws.onopen = () => {
-      console.log("WebSocket connected");
       setConnected(true);
       ws.send(
         JSON.stringify({
@@ -32,7 +31,7 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
     };
 
     ws.onerror = (err) => {
-      console.error("WebSocket error", err);
+      console.error("WebSocket error....", err);
     };
 
     ws.onclose = () => {

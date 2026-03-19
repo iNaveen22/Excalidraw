@@ -76,44 +76,136 @@ wss.on("connection", (ws, request) => {
           return;
         }
 
-        /* CHAT / DRAW EVENT */
-        if (parsedData.type === "chat") {
-          console.log("faahhhhhhhhhhhh", parsedData);
+        if (parsedData.type === "shape:create") {
           const roomId = Number(parsedData.roomId);
-          const message = parsedData.message;
+          const shape = parsedData.shape;
+          const clientId = parsedData.clientId;
 
-          if (!roomId || !message) {
-            console.error("Invalid chat payload", parsedData);
+          if (!roomId || !clientId || !shape || typeof shape.id !== "string" || typeof shape.type !== "string") {
+            console.error("Invalid shape:create payload", parsedData);
             return;
           }
 
-          /* ---- SAVE TO DB (SAFE) ---- */
-          try {
-            await prismaClient.chat.create({
-              data: {
-                message,
-                roomId: Number(roomId),
-                userId,
-              },
-            });
-          } catch (dbError) {
-            console.error("DB error while saving chat:", dbError);
-            return; // VERY IMPORTANT
-          }
+          console.log("WS CREATE", shape.strokeColor, shape.strokeWidth);
 
-          /* ---- BROADCAST ---- */
+
+          const strokeColor = typeof shape.strokeColor === "string" ? shape.strokeColor : "#ffffff";
+          const strokeWidth =
+            typeof shape.strokeWidth === "number" ? shape.strokeWidth : 2;
+
+
+          await prismaClient.shape.create({
+            data: {
+              id: shape.id,
+              roomId,
+              type: shape.type,
+              data: shape,
+              strokeColor,
+              strokeWidth
+            },
+          });
+
+
           for (const u of users) {
             if (u.rooms.includes(roomId)) {
-              u.ws.send(
-                JSON.stringify({
-                  type: "chat",
-                  message,
-                  roomId,
-                })
-              );
+              u.ws.send(JSON.stringify({
+                type: "shape:create",
+                roomId,
+                clientId,
+                shape: { ...shape, strokeColor, strokeWidth },
+              }));
             }
           }
+
+          return;
         }
+
+        //delete
+        if (parsedData.type === "shape:delete") {
+          const roomId = Number(parsedData.roomId);
+          const shapeId = parsedData.shapeId;
+          const clientId = parsedData.clientId;
+
+          if (!roomId || !shapeId) {
+            console.error("Invalid shape:delete payload", parsedData);
+            return;
+          }
+
+          const result = await prismaClient.shape.updateMany({
+            where: { id: shapeId, roomId, deleted: false },
+            data: { deleted: true },
+          });
+
+          if (result.count === 0) {
+            console.warn("Delete ignored: shape not found", { shapeId, roomId });
+            return;
+          }
+
+          for (const u of users) {
+            if (u.rooms.includes(roomId)) {
+              u.ws.send(JSON.stringify({
+                type: "shape:delete",
+                roomId,
+                shapeId,
+                clientId
+              }));
+            }
+          }
+
+          return;
+        }
+
+        //update
+        if (parsedData.type === "shape:update") {
+          const roomId = Number(parsedData.roomId);
+          const shapeId = parsedData.shapeId;
+          const patch = parsedData.data;
+          const clientId = parsedData.clientId;
+
+          if (!roomId || !shapeId || !patch) {
+            console.error("Invalid shape:update payload", parsedData);
+            return;
+          }
+
+          const existing = await prismaClient.shape.findFirst({
+            where: { id: shapeId, roomId, deleted: false },
+            select: { data: true }
+          })
+
+          if (!existing) {
+            console.warn("Update ignored: shape not found", { shapeId, roomId });
+            return;
+          }
+
+          const mergedData = { ...(existing.data as any), ...(patch as any) };
+
+          const strokeColor = typeof patch.strokeColor === "string" ? patch.strokeColor : undefined;
+          const strokeWidth = typeof patch.strokeWidth === "number" ? patch.strokeWidth : undefined;
+
+          await prismaClient.shape.updateMany({
+            where: { id: shapeId, roomId, deleted: false },
+            data: {
+              data: mergedData,
+              ...(strokeColor ? { strokeColor } : {}),
+              ...(strokeWidth ? { strokeWidth } : {}),
+            },
+          });
+
+          for (const u of users) {
+            if (u.rooms.includes(roomId)) {
+              u.ws.send(JSON.stringify({
+                type: "shape:update",
+                roomId,
+                shapeId,
+                clientId,
+                data: patch,
+              }));
+            }
+          }
+
+          return;
+        }
+
       } catch (err) {
         console.error("WS message error:", err);
       }

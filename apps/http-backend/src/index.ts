@@ -7,10 +7,12 @@ import { prismaClient } from '@repo/db/client';
 import cors from 'cors';
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); 
 app.use(
     cors({
-        origin: "http://localhost:3222", 
+        origin: ["http://localhost:3222",
+            "https://excalidraw-web-ten.vercel.app/"
+        ], 
     })
 );
 
@@ -103,7 +105,7 @@ app.post("/room", middleware, async (req, res) => {
     })
 })
 
-app.get("/chats/:roomId", async (req, res) => {
+app.get("/rooms/:roomId/shapes", async (req, res) => {
     try {
         const roomId = Number(req.params.roomId);
 
@@ -111,15 +113,14 @@ app.get("/chats/:roomId", async (req, res) => {
             return res.status(400).json({ error: "Invalid roomId" });
         }
 
-        const messages = await prismaClient.chat.findMany({
-            where: { roomId }, // Prisma expects an integer here
-            orderBy: { id: "asc" },
-            take: 55,
+        const shapes = await prismaClient.shape.findMany({
+            where: { roomId, deleted: false },
+            orderBy: { createdAt: "asc"}
         });
 
-        res.json({ messages });
+        res.json({ shapes: shapes.map(s => s.data) });
     } catch (err) {
-        console.error(err);
+        console.error("rooms/roomId/shapes endpoint error",err);
         res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -137,4 +138,4 @@ app.get("/room/:slug", async (req, res) => {
     })
 })
 
-app.listen(3003);
+app.listen(process.env.PORT || 3003);

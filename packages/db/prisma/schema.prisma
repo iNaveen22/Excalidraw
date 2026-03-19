@@ -24,6 +24,7 @@ model Room {
   createdAt   DateTime    @default(now())
   adminId     String
   chats       Chat[]
+  shapes      Shape[]
   admin       User        @relation("AdminRooms", fields: [adminId], references: [id], onDelete: Cascade)  
 }
 
@@ -41,4 +42,22 @@ model Chat {
   @@index([roomId])
   @@index([userId])
 }
+
+model Shape {
+  id        String   @id                 
+  roomId    Int
+  type      String                      
+  data      Json             
+  strokeColor   String   @default("#ffffff")
+  strokeWidth   Int       @default(2)
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([roomId, deleted])
+}
+
 
