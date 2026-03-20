@@ -2,8 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { middleware } from './middleware';
 import { JWT_SECRET } from "@repo/backend-common";
-import { CreateUserSchema, SigninSchema, CreateRoomSchema } from '@repo/common/types';
-import { prismaClient } from '@repo/db/client';
+import { CreateUserSchema, SigninSchema, CreateRoomSchema } from '@repo/common';
+import { prismaClient } from '@repo/db';
 import cors from 'cors';
 
 const app = express();
@@ -138,4 +138,6 @@ app.get("/room/:slug", async (req, res) => {
     })
 })
 
-app.listen(process.env.PORT || 3003);
+app.listen(process.env.PORT || 3003, () => {
+    console.log("http backend running")
+});

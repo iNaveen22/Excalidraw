@@ -1,3 +1,15 @@
 {
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es2020",
+        "declaration": true,
+        "declarationMap": true,
+        "strict": true,
+        "esModuleInterop": true
+    },
+    "include": ["src"],
     "extends": "../typescript-config/base.json"
 }
