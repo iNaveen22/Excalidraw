@@ -13,6 +13,7 @@ app.use(
         origin: ["http://localhost:3222",
             "https://excalidraw-web-ten.vercel.app/"
         ], 
+        credentials: true,
     })
 );
 
