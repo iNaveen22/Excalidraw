@@ -11,7 +11,8 @@ app.use(express.json());
 app.use(
     cors({
         origin: ["http://localhost:3222",
-            "https://excalidraw-web-ten.vercel.app/"
+            "https://excalidraw-web-ten.vercel.app",
+            "https://excalidraw-6m1xistiq-inaveen22s-projects.vercel.app"
         ], 
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"], 
